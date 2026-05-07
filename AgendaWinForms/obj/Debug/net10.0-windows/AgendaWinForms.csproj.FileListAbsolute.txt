@@ -12,3 +12,4 @@ C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net10.0-window
 C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net10.0-windows\AgendaWinForms.pdb
 C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net10.0-windows\AgendaWinForms.genruntimeconfig.cache
 C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net10.0-windows\ref\AgendaWinForms.dll
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net10.0-windows\AgendaWinForms.sourcelink.json

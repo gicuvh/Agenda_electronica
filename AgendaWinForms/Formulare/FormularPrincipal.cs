@@ -1,17 +1,12 @@
-using System;
-using System.Drawing;
 using System.Windows.Forms;
 
-namespace AgendaWinForms.Formulare
+namespace AgendaWinForms
 {
-    public class FormularPrincipal : Form
+    public partial class Form1 : Form
     {
-        public FormularPrincipal()
+        public Form1()
         {
-            this.Text = "Agenda Electronica";
-            this.Size = new Size(1200, 700);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.White;
+            InitializeComponent();
         }
     }
 }
