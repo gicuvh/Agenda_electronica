@@ -1,0 +1,15 @@
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.AssemblyInfoInputs.cache
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.AssemblyInfo.cs
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.csproj.CoreCompileInputs.cache
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.sourcelink.json
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\bin\Debug\net8.0-windows\AgendaWinForms.exe
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\bin\Debug\net8.0-windows\AgendaWinForms.deps.json
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\bin\Debug\net8.0-windows\AgendaWinForms.runtimeconfig.json
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\bin\Debug\net8.0-windows\AgendaWinForms.dll
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\bin\Debug\net8.0-windows\AgendaWinForms.pdb
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.dll
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\refint\AgendaWinForms.dll
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.pdb
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\AgendaWinForms.genruntimeconfig.cache
+C:\Users\user\Desktop\Agenda_electronica\AgendaWinForms\obj\Debug\net8.0-windows\ref\AgendaWinForms.dll

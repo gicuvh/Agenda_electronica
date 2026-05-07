@@ -9,7 +9,7 @@ namespace AgendaWinForms
         static void Main()
         {
             ApplicationConfiguration.Initialize();
-            Application.Run(new FormularPrincipal());
+            Application.Run(new Form1());
         }
     }
 }
