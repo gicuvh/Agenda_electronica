@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using AgendaWinForms.Formulare;
 
 namespace AgendaWinForms
 {
@@ -9,7 +10,7 @@ namespace AgendaWinForms
         static void Main()
         {
             ApplicationConfiguration.Initialize();
-            Application.Run(new Form1());
+            Application.Run(new FormularLogin());
         }
     }
 }

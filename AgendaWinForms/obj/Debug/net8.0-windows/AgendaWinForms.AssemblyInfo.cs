@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgendaWinForms")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+661fce1c051379c323c43fbbe37c4fdb27a566e1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+faffced9a9aca1a7da4a8b9dae785188a33139f0")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgendaWinForms")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgendaWinForms")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
