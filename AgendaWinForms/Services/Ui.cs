@@ -45,7 +45,7 @@ public static class Ui
         };
     }
 
-    // Buton cu stil modern (Flat și curat)
+    // Buton cu stil modern
     public static Button Button(string text, int x, int y, int width, int height, Color? fill = null, Color? fore = null)
     {
         var btn = new Button
@@ -63,7 +63,7 @@ public static class Ui
         return btn;
     }
 
-    // Input stilizat cu fundal gri deschis, exact ca în imagine
+    // Input stilizat cu fundal gri deschis
     public static TextBox TextBox(string placeholder, int x, int y, int width, bool password = false)
     {
         return new TextBox
@@ -73,12 +73,12 @@ public static class Ui
             Size = new Size(width, 36),
             Font = Font(10),
             UseSystemPasswordChar = password,
-            BorderStyle = BorderStyle.None, // Vom desena noi bordura dacă e nevoie sau folosim un container
+            BorderStyle = BorderStyle.None, // bordura 
             BackColor = LightGrayBg
         };
     }
 
-    // METODĂ NOUĂ: Grupează Label + TextBox + Icon pentru a copia imaginea image_55273b.jpg
+    
     public static Panel InputGroup(string labelText, string placeholder, int x, int y, string icon)
     {
         var container = new Panel { Location = new Point(x, y), Size = new Size(320, 65), BackColor = Color.Transparent };
@@ -98,7 +98,7 @@ public static class Ui
             Padding = new Padding(8, 6, 8, 6)
         };
 
-        // Iconița (simulată prin Label)
+        // Iconita
         inputField.Controls.Add(new Label { 
             Text = icon, 
             Location = new Point(5, 8), 
@@ -120,7 +120,7 @@ public static class Ui
         inputField.Controls.Add(txt);
         container.Controls.Add(inputField);
 
-        // Desenează bordura gri subțire pentru input
+        // bordura gri 
         inputField.Paint += (s, e) => {
             using var pen = new Pen(Color.FromArgb(226, 232, 240));
             e.Graphics.DrawRectangle(pen, 0, 0, inputField.Width - 1, inputField.Height - 1);
@@ -152,7 +152,7 @@ public static class Ui
         
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         
-        // Verificăm dacă e cardul principal pentru a folosi verdele din imagine
+        
         Color borderColor = control.Tag?.ToString() == "SuccessCard" ? BorderSuccess : Border;
         
         using var path = RoundedRectangle(control.ClientRectangle, 12);

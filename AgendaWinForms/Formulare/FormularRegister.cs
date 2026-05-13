@@ -9,7 +9,7 @@ public class FormularRegister : Form
 {
     public FormularRegister()
     {
-        // Setări Formular (Match image size/style)
+        // Setări Formular
         Text = "Agenda — Înregistrare";
         Size = new Size(1100, 750);
         StartPosition = FormStartPosition.CenterScreen;
@@ -56,19 +56,19 @@ public class FormularRegister : Form
         lblSub.Dock = DockStyle.Top;
         mainContent.Controls.Add(lblSub);
 
-        // CARDUL VERDE (Cel din mijlocul imaginii image_55273b.jpg)
+        // CARDUL VERDE
         var card = new Panel { 
             Size = new Size(420, 520), 
             Location = new Point(0, 0), 
             BackColor = Color.White 
         };
         card.Paint += (s, e) => {
-            // Chenar verde ca în poză
+            // Chenar 
             using var pen = new Pen(Color.FromArgb(200, 230, 201), 2);
             Ui.PaintRoundedBorder(card, e); 
         };
 
-        // Iconița Check de sus (Verde)
+        // Iconița Check
         var checkCircle = new Label { 
             Text = "✔️", 
             Size = new Size(50, 50), 
@@ -78,10 +78,10 @@ public class FormularRegister : Form
             Font = new Font("Segoe UI", 15, FontStyle.Bold),
             ForeColor = Color.Green
         };
-        // Notă: checkCircle necesită ca cardul să fie într-un container care să permită overflow sau mutare manuală
+       
         card.Controls.Add(checkCircle);
 
-        // Inputuri stilizate exact ca în imagine
+        // Inputuri stilizate 
         card.Controls.Add(Ui.InputGroup("Nume complet", "ex. Andrei Popescu", 40, 60, "👤"));
         card.Controls.Add(Ui.InputGroup("Adresă de e-mail sau Utilizator", "exemplu@email.com", 40, 135, "@"));
         card.Controls.Add(Ui.InputGroup("Parolă", "••••••••", 40, 210, "🔒"));
