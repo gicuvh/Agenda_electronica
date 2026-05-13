@@ -111,19 +111,20 @@ public class FormularPrincipal : Form
     private async Task ShowDashboardAsync()
     {
         var user = AuthService.CurrentUser!;
+        var isAdmin = IsAdmin();
         using var db = new AppDbContext();
         _content.Controls.Add(Ui.Label($"Bine ai revenit, {user.NumeComplet}!", 28, 28, 600, 24, 10, FontStyle.Regular, Ui.Muted));
 
         var noteCard = Ui.Card(28, 70, 260, 210);
         noteCard.Controls.Add(Ui.Label("⭐ Note recente", 14, 12, 220, 26, 11, FontStyle.Bold));
-        var note = await db.Note.Where(n => n.UserId == user.Id).GroupBy(n => n.Materie)
+        var note = await db.Note.Where(n => isAdmin || n.UserId == user.Id).GroupBy(n => n.Materie)
             .Select(g => new { Materie = g.Key, Media = g.Average(n => n.Valoare) }).Take(3).ToListAsync();
         AddRows(noteCard, note.Select(n => ($"{n.Materie}", $"{n.Media:0.0}")), Ui.Primary);
         _content.Controls.Add(noteCard);
 
         var temeCard = Ui.Card(312, 70, 260, 210);
         temeCard.Controls.Add(Ui.Label("🔖 Teme urgente", 14, 12, 220, 26, 11, FontStyle.Bold));
-        var teme = await db.Teme.Where(t => t.UserId == user.Id && !t.Finalizata && t.Deadline >= DateTime.Today)
+        var teme = await db.Teme.Where(t => (isAdmin || t.UserId == user.Id) && !t.Finalizata && t.Deadline >= DateTime.Today)
             .OrderBy(t => t.Deadline).Take(3).ToListAsync();
         AddRows(temeCard, teme.Select(t => (t.Titlu, t.Deadline == DateTime.Today ? "Azi" : $"{(t.Deadline - DateTime.Today).Days} zile")), Ui.Warning);
         _content.Controls.Add(temeCard);
@@ -131,7 +132,7 @@ public class FormularPrincipal : Form
         var orarCard = Ui.Card(596, 70, 260, 210);
         orarCard.Controls.Add(Ui.Label("📅 Orarul de azi", 14, 12, 220, 26, 11, FontStyle.Bold));
         var zi = ZiRomaneasca(DateTime.Today.DayOfWeek);
-        var orar = (await db.OrarEntries.Where(o => o.UserId == user.Id && o.ZiSaptamana == zi).ToListAsync())
+        var orar = (await db.OrarEntries.Where(o => (isAdmin || o.UserId == user.Id) && o.ZiSaptamana == zi).ToListAsync())
             .OrderBy(o => o.OraInceput)
             .Take(4)
             .ToList();
@@ -140,7 +141,7 @@ public class FormularPrincipal : Form
 
         var activity = Ui.Card(28, 306, 828, 250);
         activity.Controls.Add(Ui.Label("🕐 Activitate recentă", 14, 12, 300, 28, 12, FontStyle.Bold));
-        var activities = await db.Activitati.Where(a => a.UserId == user.Id).OrderByDescending(a => a.Timestamp).Take(6).ToListAsync();
+        var activities = await db.Activitati.Where(a => isAdmin || a.UserId == user.Id).OrderByDescending(a => a.Timestamp).Take(6).ToListAsync();
         int top = 52;
         if (!activities.Any()) activity.Controls.Add(Ui.Label("Nu există activitate recentă.", 18, top, 450, 24, 10, FontStyle.Regular, Ui.Muted));
         foreach (var a in activities)
