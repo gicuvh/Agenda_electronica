@@ -1,18 +1,8 @@
-using MySql.Data.MySqlClient;
+using AgendaWinForms.Data;
 
-namespace AgendaWinForms.Database
+namespace AgendaWinForms.Database;
+
+public static class ConexiuneBD
 {
-    public class ConexiuneBD
-    {
-        private string connectionString =
-            "server=localhost;" +
-            "database=agendaelectronica;" +
-            "uid=root;" +
-            "pwd=GicuVoloh2008;";
-
-        public MySqlConnection GetConnection()
-        {
-            return new MySqlConnection(connectionString);
-        }
-    }
+    public static string DatabasePath => AppDbContext.DatabasePath;
 }

@@ -1,178 +1,144 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using Guna.UI2.WinForms;
-using MySql.Data.MySqlClient;
-using AgendaWinForms.Database;
+using AgendaWinForms.Services;
 
-namespace AgendaWinForms.Formulare
+namespace AgendaWinForms.Formulare;
+
+public class FormularRegister : Form
 {
-    public class FormularRegister : Form
+    public FormularRegister()
     {
-        private Guna2TextBox? txtNume;
-        private Guna2TextBox? txtEmail;
-        private Guna2TextBox? txtParola;
-        private Guna2TextBox? txtConfirmParola;
+        // Setări Formular (Match image size/style)
+        Text = "Agenda — Înregistrare";
+        Size = new Size(1100, 750);
+        StartPosition = FormStartPosition.CenterScreen;
+        BackColor = Color.White; // Fundal alb curat ca în imagine
+        FormBorderStyle = FormBorderStyle.Sizable;
 
-        public FormularRegister()
-        {
-            InitializareFereastra();
-            InitializareRegister();
+        // 1. SIDEBAR (Stânga)
+        var sidebar = new Panel { Dock = DockStyle.Left, Width = 220, BackColor = Color.White };
+        sidebar.Paint += (s, e) => e.Graphics.DrawLine(Pens.LightGray, 219, 0, 219, Height);
+
+        sidebar.Controls.Add(Ui.Label("📖 Agenda", 20, 20, 160, 32, 14, FontStyle.Bold, Color.FromArgb(44, 62, 80)));
+        
+        int startTop = 80;
+        string[] navItems = { "🏠 Dashboard", "📊 Note", "✅ Teme", "📅 Orar" };
+        foreach (var item in navItems) {
+            sidebar.Controls.Add(NavButton(item, startTop));
+            startTop += 45;
         }
 
-        private void InitializareFereastra()
-        {
-            this.Text = "Agenda | Creare cont";
-            this.Size = new Size(780, 760);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(245, 247, 250);
-        }
+        // Butoane Jos Sidebar
+        sidebar.Controls.Add(NavButton("⚙️ Setări", Height - 120));
+        sidebar.Controls.Add(NavButton("❓ Ajutor", Height - 80));
+        Controls.Add(sidebar);
 
-        private void InitializareRegister()
-        {
-            Guna2Panel card = new Guna2Panel
-            {
-                Size = new Size(520, 620),
-                Location = new Point(125, 70),
-                BorderRadius = 30,
-                FillColor = Color.White
-            };
-            card.ShadowDecoration.Enabled = true;
-            card.ShadowDecoration.Shadow = new Padding(10);
+        // 2. HEADER (Sus - Dreapta)
+        var header = new Panel { Dock = DockStyle.Top, Height = 60 };
+        var userProfile = Ui.Label("👤 Utilizator Nou\nGuest", Width - 380, 15, 150, 40, 8);
+        userProfile.TextAlign = ContentAlignment.MiddleRight;
+        header.Controls.Add(userProfile);
+        header.Controls.Add(Ui.Label("🔔", Width - 240, 20, 30, 30, 12));
+        Controls.Add(header);
 
-            Label title = new Label
-            {
-                Text = "Creare cont",
-                Font = new Font("Segoe UI", 28, FontStyle.Bold),
-                ForeColor = Color.FromArgb(34, 45, 67),
-                Location = new Point(40, 40),
-                AutoSize = true
-            };
+        // 3. CONTINUT CENTRAL
+        var mainContent = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(252, 253, 255) };
+        
+        // Titlu Central
+        var lblTitle = Ui.Label("Creare cont", 0, 40, 800, 50, 28, FontStyle.Bold);
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+        lblTitle.Dock = DockStyle.Top;
+        mainContent.Controls.Add(lblTitle);
 
-            Label subtitle = new Label
-            {
-                Text = "Alătură-te comunității Agenda.",
-                Font = new Font("Segoe UI", 10, FontStyle.Regular),
-                ForeColor = Color.Gray,
-                Location = new Point(40, 100),
-                AutoSize = true
-            };
+        var lblSub = Ui.Label("Alătură-te comunității Agenda!", 0, 90, 800, 30, 11, FontStyle.Regular, Ui.Muted);
+        lblSub.TextAlign = ContentAlignment.MiddleCenter;
+        lblSub.Dock = DockStyle.Top;
+        mainContent.Controls.Add(lblSub);
 
-            txtNume = new Guna2TextBox
-            {
-                PlaceholderText = "Nume complet",
-                Size = new Size(440, 50),
-                Location = new Point(40, 150),
-                BorderRadius = 15
-            };
+        // CARDUL VERDE (Cel din mijlocul imaginii image_55273b.jpg)
+        var card = new Panel { 
+            Size = new Size(420, 520), 
+            Location = new Point(0, 0), 
+            BackColor = Color.White 
+        };
+        card.Paint += (s, e) => {
+            // Chenar verde ca în poză
+            using var pen = new Pen(Color.FromArgb(200, 230, 201), 2);
+            Ui.PaintRoundedBorder(card, e); 
+        };
 
-            txtEmail = new Guna2TextBox
-            {
-                PlaceholderText = "Adresă e-mail",
-                Size = new Size(440, 50),
-                Location = new Point(40, 220),
-                BorderRadius = 15
-            };
+        // Iconița Check de sus (Verde)
+        var checkCircle = new Label { 
+            Text = "✔️", 
+            Size = new Size(50, 50), 
+            Location = new Point(185, -25), 
+            BackColor = Color.FromArgb(232, 245, 233),
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Segoe UI", 15, FontStyle.Bold),
+            ForeColor = Color.Green
+        };
+        // Notă: checkCircle necesită ca cardul să fie într-un container care să permită overflow sau mutare manuală
+        card.Controls.Add(checkCircle);
 
-            txtParola = new Guna2TextBox
-            {
-                PlaceholderText = "Parolă",
-                PasswordChar = '●',
-                Size = new Size(440, 50),
-                Location = new Point(40, 290),
-                BorderRadius = 15
-            };
+        // Inputuri stilizate exact ca în imagine
+        card.Controls.Add(Ui.InputGroup("Nume complet", "ex. Andrei Popescu", 40, 60, "👤"));
+        card.Controls.Add(Ui.InputGroup("Adresă de e-mail sau Utilizator", "exemplu@email.com", 40, 135, "@"));
+        card.Controls.Add(Ui.InputGroup("Parolă", "••••••••", 40, 210, "🔒"));
+        card.Controls.Add(Ui.InputGroup("Confirmă parola", "••••••••", 40, 285, "🔒"));
 
-            txtConfirmParola = new Guna2TextBox
-            {
-                PlaceholderText = "Confirmă parola",
-                PasswordChar = '●',
-                Size = new Size(440, 50),
-                Location = new Point(40, 360),
-                BorderRadius = 15
-            };
+        // Buton Albastru
+        var btnCreare = Ui.Button("Creează cont", 40, 370, 340, 45);
+        btnCreare.BackColor = Color.FromArgb(37, 110, 215); // Albastru Google/Modern
+        card.Controls.Add(btnCreare);
 
-            Guna2Button btnRegister = new Guna2Button
-            {
-                Text = "Creează cont",
-                Size = new Size(440, 55),
-                Location = new Point(40, 440),
-                BorderRadius = 15,
-                FillColor = Color.FromArgb(27, 95, 255),
-                ForeColor = Color.White
-            };
-            btnRegister.Click += BtnRegister_Click;
+        // Buton Google (Alb/Griu)
+        var btnGoogle = Ui.Button("Înregistrare rapidă cu Google", 40, 425, 340, 45, Color.FromArgb(235, 243, 255), Color.Black);
+        card.Controls.Add(btnGoogle);
 
-            Label loginText = new Label
-            {
-                Text = "Ai deja un cont?",
-                Font = new Font("Segoe UI", 9, FontStyle.Regular),
-                ForeColor = Color.Gray,
-                Location = new Point(40, 520),
-                AutoSize = true
-            };
+        mainContent.Controls.Add(card);
 
-            LinkLabel linkLogin = new LinkLabel
-            {
-                Text = "Autentifică-te",
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                LinkColor = Color.FromArgb(27, 95, 255),
-                Location = new Point(125, 518),
-                AutoSize = true
-            };
-            linkLogin.Click += (s, e) => this.Close();
+        // Footer link
+        var footerLink = new LinkLabel {
+            Text = "Ai deja un cont? Autentifică-te →",
+            Location = new Point(320, 680),
+            AutoSize = true,
+            LinkColor = Color.FromArgb(37, 110, 215),
+            Font = Ui.Font(10)
+        };
+        mainContent.Controls.Add(footerLink);
 
-            card.Controls.Add(title);
-            card.Controls.Add(subtitle);
-            card.Controls.Add(txtNume);
-            card.Controls.Add(txtEmail);
-            card.Controls.Add(txtParola);
-            card.Controls.Add(txtConfirmParola);
-            card.Controls.Add(btnRegister);
-            card.Controls.Add(loginText);
-            card.Controls.Add(linkLogin);
+        Controls.Add(mainContent);
 
-            this.Controls.Add(card);
-        }
+        mainContent.Resize += (_, _) => CenterContent(mainContent, card, footerLink);
+        CenterContent(mainContent, card, footerLink);
+    }
 
-        private void BtnRegister_Click(object? sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtNume?.Text) || string.IsNullOrWhiteSpace(txtEmail?.Text) || string.IsNullOrWhiteSpace(txtParola?.Text) || string.IsNullOrWhiteSpace(txtConfirmParola?.Text))
-            {
-                MessageBox.Show("Completați toate câmpurile.", "Atenție", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+    private static void CenterContent(Control container, Control card, Control footerLink)
+    {
+        var cardX = Math.Max(24, (container.ClientSize.Width - card.Width) / 2);
+        var cardY = Math.Max(120, (container.ClientSize.Height - card.Height) / 2);
+        card.Location = new Point(cardX, cardY);
 
-            if (txtParola!.Text != txtConfirmParola!.Text)
-            {
-                MessageBox.Show("Parolele nu coincid.", "Atenție", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+        footerLink.Location = new Point(
+            Math.Max(24, cardX + (card.Width - footerLink.Width) / 2),
+            card.Bottom + 22);
+    }
 
-            try
-            {
-                ConexiuneBD bd = new ConexiuneBD();
-                using MySqlConnection conexiune = bd.GetConnection();
-                conexiune.Open();
-
-                string query =
-                    "INSERT INTO utilizatori(nume,email,parola,rol) " +
-                    "VALUES(@nume,@email,@parola,'user')";
-
-                using MySqlCommand cmd = new MySqlCommand(query, conexiune);
-                cmd.Parameters.AddWithValue("@nume", txtNume!.Text);
-                cmd.Parameters.AddWithValue("@email", txtEmail!.Text);
-                cmd.Parameters.AddWithValue("@parola", txtParola!.Text);
-
-                cmd.ExecuteNonQuery();
-
-                MessageBox.Show("Cont creat!\nPuteți reveni la autentificare.", "Succes", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Eroare", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+    private static Button NavButton(string text, int top)
+    {
+        var btn = new Button {
+            Text = "   " + text,
+            Location = new Point(10, top),
+            Size = new Size(200, 40),
+            FlatStyle = FlatStyle.Flat,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = Ui.Font(10),
+            ForeColor = Color.FromArgb(100, 100, 100),
+            Cursor = Cursors.Hand
+        };
+        btn.FlatAppearance.BorderSize = 0;
+        btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(240, 240, 240);
+        return btn;
     }
 }

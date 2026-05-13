@@ -10,12 +10,12 @@
 using System;
 using System.Reflection;
 
-[assembly: System.Reflection.AssemblyCompanyAttribute("AgendaWinForms")]
+[assembly: System.Reflection.AssemblyCompanyAttribute("Agenda")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+faffced9a9aca1a7da4a8b9dae785188a33139f0")]
-[assembly: System.Reflection.AssemblyProductAttribute("AgendaWinForms")]
-[assembly: System.Reflection.AssemblyTitleAttribute("AgendaWinForms")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+00986728784c41e66cded39664bcc0ed3756d78c")]
+[assembly: System.Reflection.AssemblyProductAttribute("Agenda")]
+[assembly: System.Reflection.AssemblyTitleAttribute("Agenda")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]

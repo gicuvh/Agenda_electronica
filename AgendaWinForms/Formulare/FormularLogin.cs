@@ -1,192 +1,96 @@
-using System;
 using System.Drawing;
 using System.Windows.Forms;
-using Guna.UI2.WinForms;
-using MySql.Data.MySqlClient;
-using AgendaWinForms.Database;
+using AgendaWinForms.Services;
 
-namespace AgendaWinForms.Formulare
+namespace AgendaWinForms.Formulare;
+
+public class FormularLogin : Form
 {
-    public class FormularLogin : Form
+    private const int SidebarWidth = 200;
+    private readonly TextBox _txtEmail;
+    private readonly TextBox _txtParola;
+    private readonly Label _errorText;
+    private readonly Panel _card;
+
+    public FormularLogin()
     {
-        private Guna2TextBox? txtEmail;
-        private Guna2TextBox? txtParola;
+        Text = "Agenda — Autentificare";
+        Size = new Size(900, 600);
+        StartPosition = FormStartPosition.CenterScreen;
+        BackColor = Color.FromArgb(240, 244, 255);
+        MinimumSize = new Size(900, 600);
 
-        public FormularLogin()
+        var sidebar = new Panel { Dock = DockStyle.Left, Width = SidebarWidth, BackColor = Ui.Sidebar };
+        sidebar.Controls.Add(Ui.Label("📖 Agenda", 20, 24, 160, 32, 16, FontStyle.Bold));
+        sidebar.Controls.Add(NavPreview("🏠  Dashboard", 86));
+        sidebar.Controls.Add(NavPreview("📊  Note", 134));
+        sidebar.Controls.Add(NavPreview("✅  Teme", 182));
+        sidebar.Controls.Add(NavPreview("📅  Orar", 230));
+        Controls.Add(sidebar);
+
+        _card = Ui.Card(0, 0, 400, 390);
+        _card.Paint += Ui.PaintRoundedBorder;
+        var title = Ui.Label("Autentificare", 0, 22, 368, 36, 24, FontStyle.Bold);
+        title.TextAlign = ContentAlignment.MiddleCenter;
+        _card.Controls.Add(title);
+        var subtitle = Ui.Label("Bine ai revenit la Agenda!", 0, 62, 368, 26, 10, FontStyle.Regular, Ui.Muted);
+        subtitle.TextAlign = ContentAlignment.MiddleCenter;
+        _card.Controls.Add(subtitle);
+        _errorText = Ui.Label(string.Empty, 32, 98, 304, 44, 9, FontStyle.Regular, Ui.Danger);
+        _card.Controls.Add(_errorText);
+        _card.Controls.Add(Ui.Label("Email", 32, 146, 304, 20, 9, FontStyle.Regular, Color.FromArgb(85, 85, 85)));
+        _txtEmail = Ui.TextBox("admin@gmail.com", 32, 168, 304);
+        _card.Controls.Add(_txtEmail);
+        _card.Controls.Add(Ui.Label("Parolă", 32, 210, 304, 20, 9, FontStyle.Regular, Color.FromArgb(85, 85, 85)));
+        _txtParola = Ui.TextBox("Admin123!", 32, 232, 304, true);
+        _card.Controls.Add(_txtParola);
+        var login = Ui.Button("Autentifică-te", 32, 286, 304, 42);
+        login.Click += Login_Click;
+        _card.Controls.Add(login);
+        var register = new LinkLabel
         {
-            InitializareFereastra();
-            InitializareLayout();
+            Text = "Nu ai cont? Creează unul →",
+            Location = new Point(92, 344),
+            AutoSize = true,
+            LinkColor = Ui.Primary,
+            Font = Ui.Font(9)
+        };
+        register.Click += (_, _) => { new FormularRegister().Show(); Hide(); };
+        _card.Controls.Add(register);
+        Controls.Add(_card);
+
+        Resize += (_, _) => CenterCard();
+        CenterCard();
+    }
+
+    private void CenterCard()
+    {
+        var contentWidth = ClientSize.Width - SidebarWidth;
+        var x = SidebarWidth + Math.Max(0, (contentWidth - _card.Width) / 2);
+        var y = Math.Max(0, (ClientSize.Height - _card.Height) / 2);
+        _card.Location = new Point(x, y);
+    }
+
+    private static Button NavPreview(string text, int top)
+    {
+        var button = Ui.Button(text, 8, top, 184, 38, Color.Transparent, Color.FromArgb(85, 85, 85));
+        button.FlatAppearance.BorderSize = 0;
+        button.TextAlign = ContentAlignment.MiddleLeft;
+        return button;
+    }
+
+    private async void Login_Click(object? sender, EventArgs e)
+    {
+        var (success, message) = await AuthService.LoginAsync(_txtEmail.Text, _txtParola.Text);
+        if (!success)
+        {
+            _errorText.Text = message;
+            return;
         }
 
-        private void InitializareFereastra()
-        {
-            this.Text = "Agenda | Autentificare";
-            this.Size = new Size(1200, 760);
-            this.StartPosition = FormStartPosition.CenterScreen;
-            this.BackColor = Color.FromArgb(245, 247, 250);
-        }
-
-        private void InitializareLayout()
-        {
-            Guna2Panel leftPanel = new Guna2Panel
-            {
-                Dock = DockStyle.Left,
-                Width = 420,
-                FillColor = Color.FromArgb(27, 95, 255)
-            };
-
-            Label logo = new Label
-            {
-                Text = "Agenda",
-                Font = new Font("Segoe UI", 30, FontStyle.Bold),
-                ForeColor = Color.White,
-                Location = new Point(40, 40),
-                AutoSize = true
-            };
-
-            Label slogan = new Label
-            {
-                Text = "Gestionați notițele și programările\nintr-un singur loc.",
-                Font = new Font("Segoe UI", 11, FontStyle.Regular),
-                ForeColor = Color.FromArgb(220, 230, 255),
-                Location = new Point(40, 120),
-                Size = new Size(340, 80)
-            };
-
-            leftPanel.Controls.Add(logo);
-            leftPanel.Controls.Add(slogan);
-            this.Controls.Add(leftPanel);
-
-            Guna2Panel card = new Guna2Panel
-            {
-                Size = new Size(520, 520),
-                Location = new Point(520, 120),
-                BorderRadius = 30,
-                FillColor = Color.White,
-            };
-            card.ShadowDecoration.Enabled = true;
-            card.ShadowDecoration.Shadow = new Padding(10);
-
-            Label title = new Label
-            {
-                Text = "Autentificare",
-                Font = new Font("Segoe UI", 28, FontStyle.Bold),
-                ForeColor = Color.FromArgb(34, 45, 67),
-                Location = new Point(40, 40),
-                AutoSize = true
-            };
-
-            Label subtitle = new Label
-            {
-                Text = "Introduceți datele pentru a vă conecta.",
-                Font = new Font("Segoe UI", 10, FontStyle.Regular),
-                ForeColor = Color.Gray,
-                Location = new Point(40, 100),
-                AutoSize = true
-            };
-
-            txtEmail = new Guna2TextBox
-            {
-                PlaceholderText = "Adresă e-mail",
-                Size = new Size(440, 50),
-                Location = new Point(40, 150),
-                BorderRadius = 15
-            };
-
-            txtParola = new Guna2TextBox
-            {
-                PlaceholderText = "Parolă",
-                PasswordChar = '●',
-                Size = new Size(440, 50),
-                Location = new Point(40, 220),
-                BorderRadius = 15
-            };
-
-            Guna2Button btnLogin = new Guna2Button
-            {
-                Text = "Autentificare",
-                Size = new Size(440, 55),
-                Location = new Point(40, 300),
-                BorderRadius = 15,
-                FillColor = Color.FromArgb(27, 95, 255),
-                ForeColor = Color.White
-            };
-            btnLogin.Click += BtnLogin_Click;
-
-            Label bottomText = new Label
-            {
-                Text = "Nu ai cont?",
-                Font = new Font("Segoe UI", 9, FontStyle.Regular),
-                ForeColor = Color.Gray,
-                Location = new Point(40, 380),
-                AutoSize = true
-            };
-
-            LinkLabel linkRegister = new LinkLabel
-            {
-                Text = "Creează cont nou",
-                Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                LinkColor = Color.FromArgb(27, 95, 255),
-                Location = new Point(115, 378),
-                AutoSize = true
-            };
-            linkRegister.Click += (s, e) =>
-            {
-                using FormularRegister register = new FormularRegister();
-                register.ShowDialog();
-            };
-
-            card.Controls.Add(title);
-            card.Controls.Add(subtitle);
-            card.Controls.Add(txtEmail);
-            card.Controls.Add(txtParola);
-            card.Controls.Add(btnLogin);
-            card.Controls.Add(bottomText);
-            card.Controls.Add(linkRegister);
-
-            this.Controls.Add(card);
-        }
-
-        private void BtnLogin_Click(object? sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtEmail?.Text) || string.IsNullOrWhiteSpace(txtParola?.Text))
-            {
-                MessageBox.Show("Introduceți e-mail și parolă.", "Atenție", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            try
-            {
-                ConexiuneBD bd = new ConexiuneBD();
-                using MySqlConnection conexiune = bd.GetConnection();
-                conexiune.Open();
-
-                string query =
-                    "SELECT * FROM utilizatori " +
-                    "WHERE email=@email AND parola=@parola";
-
-                using MySqlCommand cmd = new MySqlCommand(query, conexiune);
-                cmd.Parameters.AddWithValue("@email", txtEmail!.Text);
-                cmd.Parameters.AddWithValue("@parola", txtParola!.Text);
-
-                using MySqlDataReader reader = cmd.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    FormularPrincipal principal = new FormularPrincipal();
-                    principal.FormClosed += (s, args) => this.Close();
-                    this.Hide();
-                    principal.Show();
-                }
-                else
-                {
-                    MessageBox.Show("Date invalide!", "Eroare", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Eroare", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        var principal = new FormularPrincipal();
+        principal.FormClosed += (_, _) => Close();
+        principal.Show();
+        Hide();
     }
 }

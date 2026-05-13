@@ -1,16 +1,16 @@
-using System;
-using System.Windows.Forms;
 using AgendaWinForms.Formulare;
+using AgendaWinForms.Services;
+using System.Windows.Forms;
 
-namespace AgendaWinForms
+namespace AgendaWinForms;
+
+internal static class Program
 {
-    internal static class Program
+    [STAThread]
+    private static void Main()
     {
-        [STAThread]
-        static void Main()
-        {
-            ApplicationConfiguration.Initialize();
-            Application.Run(new FormularLogin());
-        }
+        ApplicationConfiguration.Initialize();
+        AuthService.InitializeAsync().GetAwaiter().GetResult();
+        Application.Run(new FormularLogin());
     }
 }
