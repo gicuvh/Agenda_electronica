@@ -68,19 +68,6 @@ public class FormularRegister : Form
             Ui.PaintRoundedBorder(card, e); 
         };
 
-        // Iconița Check
-        var checkCircle = new Label { 
-            Text = "✔️", 
-            Size = new Size(50, 50), 
-            Location = new Point(185, -25), 
-            BackColor = Color.FromArgb(232, 245, 233),
-            TextAlign = ContentAlignment.MiddleCenter,
-            Font = new Font("Segoe UI", 15, FontStyle.Bold),
-            ForeColor = Color.Green
-        };
-       
-        card.Controls.Add(checkCircle);
-
         // Inputuri stilizate 
         card.Controls.Add(Ui.InputGroup("Nume complet", "ex. Andrei Popescu", 40, 60, "👤"));
         card.Controls.Add(Ui.InputGroup("Adresă de e-mail sau Utilizator", "exemplu@email.com", 40, 135, "@"));

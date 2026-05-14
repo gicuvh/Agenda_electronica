@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Tema> Teme => Set<Tema>();
     public DbSet<OrarEntry> OrarEntries => Set<OrarEntry>();
     public DbSet<Activitate> Activitati => Set<Activitate>();
+    public DbSet<Clasa> Clase => Set<Clasa>();
 
     public static string DatabasePath
     {
@@ -28,6 +29,12 @@ public class AppDbContext : DbContext
     {
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
         modelBuilder.Entity<User>().Property(u => u.Rol).HasDefaultValue("Elev");
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Clasa)
+            .WithMany(c => c.Elevi)
+            .HasForeignKey(u => u.ClasaId)
+            .OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<Clasa>().HasIndex(c => c.Nume).IsUnique();
         modelBuilder.Entity<Tema>().Property(t => t.Finalizata).HasDefaultValue(false);
     }
 }

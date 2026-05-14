@@ -8,6 +8,8 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public string Rol { get; set; } = "Elev";
     public DateTime DataInregistrare { get; set; } = DateTime.Now;
+    public int? ClasaId { get; set; }
+    public Clasa? Clasa { get; set; }
 
     public ICollection<Nota> Note { get; set; } = new List<Nota>();
     public ICollection<Tema> Teme { get; set; } = new List<Tema>();

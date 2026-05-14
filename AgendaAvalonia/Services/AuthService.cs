@@ -12,6 +12,7 @@ public static class AuthService
     {
         using var db = new AppDbContext();
         await db.Database.EnsureCreatedAsync();
+        await EnsureSchemaAsync(db);
         await SeedUserAsync(db, "Admin Principal", "admin@gmail.com", "Admin123!", "Admin");
         await SeedUserAsync(db, "Gheorghe", "gicu@gmail.com", "user123!", "Elev");
         await db.SaveChangesAsync();
@@ -76,6 +77,20 @@ public static class AuthService
         if (elev is null)
             return;
 
+        var clasa = await db.Clase.FirstOrDefaultAsync(c => c.Nume == "Clasa a 9-a");
+        if (clasa is null)
+        {
+            clasa = new Clasa { Nume = "Clasa a 9-a" };
+            db.Clase.Add(clasa);
+            await db.SaveChangesAsync();
+        }
+
+        if (elev.ClasaId is null)
+        {
+            elev.ClasaId = clasa.Id;
+            await db.SaveChangesAsync();
+        }
+
         if (!await db.Note.AnyAsync(n => n.UserId == elev.Id))
         {
             db.Note.AddRange(
@@ -114,5 +129,47 @@ public static class AuthService
         }
 
         await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsureSchemaAsync(AppDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "Clase" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_Clase" PRIMARY KEY AUTOINCREMENT,
+                "Nume" TEXT NOT NULL,
+                "DataCreare" TEXT NOT NULL
+            );
+            """);
+
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync("""CREATE UNIQUE INDEX IF NOT EXISTS "IX_Clase_Nume" ON "Clase" ("Nume");""");
+        }
+        catch
+        {
+            // Older local databases may already have a different index shape; EF can still use the table.
+        }
+
+        var connection = db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info('Users');";
+        var hasClasaId = false;
+        await using (var reader = await command.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+            {
+                if (string.Equals(reader.GetString(1), "ClasaId", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasClasaId = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasClasaId)
+            await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Users" ADD COLUMN "ClasaId" INTEGER NULL;""");
     }
 }
