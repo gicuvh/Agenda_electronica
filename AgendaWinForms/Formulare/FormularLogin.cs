@@ -32,8 +32,6 @@ public class FormularLogin : Form
             startTop += 45;
         }
 
-        sidebar.Controls.Add(NavButton("⚙️ Setări", Height - 120));
-        sidebar.Controls.Add(NavButton("❓ Ajutor", Height - 80));
         Controls.Add(sidebar);
 
         var header = new Panel { Dock = DockStyle.Top, Height = 60 };

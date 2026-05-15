@@ -1,0 +1,1 @@
+server=localhost;port=3306;database=agendaelectronica;user=root;password=GicuVoloh2008;

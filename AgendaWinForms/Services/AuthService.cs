@@ -12,6 +12,9 @@ public static class AuthService
     {
         using var db = new AppDbContext();
         await db.Database.EnsureCreatedAsync();
+        if (AppDbContext.UsesMySql)
+            await EnsureMySqlSchemaAsync(db);
+
         await SeedUserAsync(db, "Admin Principal", "admin@gmail.com", "Admin123!", "Admin");
         await SeedUserAsync(db, "Gheorghe", "gicu@gmail.com", "user123!", "Elev");
         await db.SaveChangesAsync();
@@ -47,7 +50,7 @@ public static class AuthService
         email = email.Trim().ToLowerInvariant();
         using var db = new AppDbContext();
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(parola, user.PasswordHash))
+        if (user is null || !PasswordMatches(parola, user.PasswordHash))
             return (false, "Email sau parolă incorectă.");
 
         CurrentUser = user;
@@ -114,5 +117,54 @@ public static class AuthService
         }
 
         await db.SaveChangesAsync();
+    }
+
+    private static bool PasswordMatches(string password, string storedPassword)
+    {
+        if (string.IsNullOrWhiteSpace(storedPassword))
+            return false;
+
+        if (storedPassword.StartsWith("$2"))
+            return BCrypt.Net.BCrypt.Verify(password, storedPassword);
+
+        return password == storedPassword;
+    }
+
+    private static async Task EnsureMySqlSchemaAsync(AppDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS activitati (
+                IdActivitate INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                IdUtilizator INT NOT NULL,
+                Descriere VARCHAR(500) NOT NULL,
+                Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                Tip VARCHAR(50) NOT NULL
+            );
+            """);
+
+        await AddColumnIfMissingAsync(db, "utilizatori", "DataInregistrare", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        await AddColumnIfMissingAsync(db, "note", "Descriere", "VARCHAR(500) NULL");
+        await AddColumnIfMissingAsync(db, "teme", "Materie", "VARCHAR(100) NOT NULL DEFAULT ''");
+        await AddColumnIfMissingAsync(db, "orar", "IdUtilizator", "INT NULL");
+    }
+
+    private static async Task AddColumnIfMissingAsync(AppDbContext db, string table, string column, string definition)
+    {
+        var exists = await db.Database.SqlQueryRaw<int>(
+            """
+            SELECT COUNT(*) AS Value
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = {0}
+              AND COLUMN_NAME = {1}
+            """,
+            table,
+            column).SingleAsync();
+
+        if (exists == 0)
+        {
+            var sql = string.Concat("ALTER TABLE `", table, "` ADD COLUMN `", column, "` ", definition, ";");
+            await db.Database.ExecuteSqlRawAsync(sql);
+        }
     }
 }

@@ -29,9 +29,6 @@ public class FormularRegister : Form
             startTop += 45;
         }
 
-        // Butoane Jos Sidebar
-        sidebar.Controls.Add(NavButton("⚙️ Setări", Height - 120));
-        sidebar.Controls.Add(NavButton("❓ Ajutor", Height - 80));
         Controls.Add(sidebar);
 
         // 2. HEADER (Sus - Dreapta)

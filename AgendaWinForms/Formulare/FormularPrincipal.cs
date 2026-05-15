@@ -36,9 +36,7 @@ public class FormularPrincipal : Form
         AddNav(sidebar, "Note", "📊  Note", 134);
         AddNav(sidebar, "Teme", "✅  Teme", 182);
         AddNav(sidebar, "Orar", "📅  Orar", 230);
-        if (user.Rol == "Admin") AddNav(sidebar, "Admin", "🛡️  Admin", 278);
-        sidebar.Controls.Add(Ui.Label("⚙️  Setări", 24, 585, 150, 24, 10, FontStyle.Regular, Ui.Muted));
-        sidebar.Controls.Add(Ui.Label("❓  Ajutor", 24, 615, 150, 24, 10, FontStyle.Regular, Ui.Muted));
+        if (IsAdmin(user)) AddNav(sidebar, "Admin", "🛡️  Admin", 278);
         return sidebar;
     }
 
@@ -47,6 +45,9 @@ public class FormularPrincipal : Form
         var header = new Panel { Dock = DockStyle.Top, Height = 70, BackColor = Color.White, Padding = new Padding(200, 0, 0, 0) };
         _pageTitle.Location = new Point(228, 18);
         header.Controls.Add(_pageTitle);
+        var dbStatus = AppDbContext.UsesMySql ? "BD: MySQL" : "BD: SQLite local";
+        var dbStatusColor = AppDbContext.UsesMySql ? Ui.Success : Ui.Warning;
+        header.Controls.Add(Ui.Label(dbStatus, 520, 24, 130, 22, 9, FontStyle.Bold, dbStatusColor));
         var accountMenu = new ContextMenuStrip();
         accountMenu.Items.Add($"{user.Email}");
         accountMenu.Items[0].Enabled = false;
@@ -132,7 +133,8 @@ public class FormularPrincipal : Form
         var orarCard = Ui.Card(596, 70, 260, 210);
         orarCard.Controls.Add(Ui.Label("📅 Orarul de azi", 14, 12, 220, 26, 11, FontStyle.Bold));
         var zi = ZiRomaneasca(DateTime.Today.DayOfWeek);
-        var orar = (await db.OrarEntries.Where(o => (isAdmin || o.UserId == user.Id) && o.ZiSaptamana == zi).ToListAsync())
+        var orar = (await db.OrarEntries.Where(o => isAdmin || AppDbContext.UsesMySql || o.UserId == user.Id).ToListAsync())
+            .Where(o => ZiEquals(o.ZiSaptamana, zi))
             .OrderBy(o => o.OraInceput)
             .Take(4)
             .ToList();
@@ -316,6 +318,7 @@ public class FormularPrincipal : Form
     private async Task ShowOrarAsync()
     {
         var canEdit = IsAdmin();
+        var zile = new[] { "Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica" };
         ComboBox? zi = null;
         TextBox? start = null;
         TextBox? end = null;
@@ -323,13 +326,16 @@ public class FormularPrincipal : Form
         TextBox? profesor = null;
         ComboBox? elev = null;
         Button? add = null;
+        ComboBox? ziVizualizata = null;
+        Label? ziCurentaLabel = null;
+        var grid = Ui.Grid();
 
         if (canEdit)
         {
             var form = Ui.Card(28, 28, 850, 112);
             elev = await BuildElevComboAsync(18, 44, 150);
             zi = new ComboBox { Location = new Point(184, 44), Size = new Size(105, 32), DropDownStyle = ComboBoxStyle.DropDownList };
-            zi.Items.AddRange(new object[] { "Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica" }); zi.SelectedIndex = 0;
+            zi.Items.AddRange(zile.Cast<object>().ToArray()); zi.SelectedIndex = 0;
             start = Ui.TextBox("08:00", 305, 44, 76);
             end = Ui.TextBox("09:00", 397, 44, 76);
             materie = Ui.TextBox("Materie", 489, 44, 140);
@@ -338,23 +344,59 @@ public class FormularPrincipal : Form
             form.Controls.AddRange(new Control[] { Ui.Label("Adaugă oră nouă", 18, 12, 250, 24, 12, FontStyle.Bold), elev, zi, start, end, materie, profesor, add });
             _content.Controls.Add(form);
         }
+        else
+        {
+            var selector = Ui.Card(28, 28, 850, 92);
+            var prev = Ui.Button("‹", 18, 40, 42, 34);
+            var next = Ui.Button("›", 318, 40, 42, 34);
+            ziCurentaLabel = Ui.Label("Ziua selectată", 76, 13, 250, 22, 11, FontStyle.Bold);
+            ziVizualizata = new ComboBox { Location = new Point(76, 40), Size = new Size(226, 32), DropDownStyle = ComboBoxStyle.DropDownList };
+            ziVizualizata.Items.AddRange(zile.Cast<object>().ToArray());
+            var azi = ZiRomaneasca(DateTime.Today.DayOfWeek);
+            ziVizualizata.SelectedItem = zile.Contains(azi) ? azi : "Luni";
+            selector.Controls.AddRange(new Control[] { ziCurentaLabel, prev, ziVizualizata, next });
+            _content.Controls.Add(selector);
 
-        var grid = Ui.Grid();
+            prev.Click += async (_, _) =>
+            {
+                ziVizualizata.SelectedIndex = (ziVizualizata.SelectedIndex + zile.Length - 1) % zile.Length;
+                await LoadGrid();
+            };
+            next.Click += async (_, _) =>
+            {
+                ziVizualizata.SelectedIndex = (ziVizualizata.SelectedIndex + 1) % zile.Length;
+                await LoadGrid();
+            };
+            ziVizualizata.SelectedIndexChanged += async (_, _) => await LoadGrid();
+        }
+
         if (canEdit) grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Elev", DataPropertyName = "Elev" });
         grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Zi", DataPropertyName = "ZiSaptamana" });
         grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Interval", DataPropertyName = "Interval" });
         grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Materie", DataPropertyName = "Materie" });
         grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Profesor", DataPropertyName = "Profesor" });
         if (canEdit) grid.Columns.Add(new DataGridViewButtonColumn { HeaderText = "Acțiuni", Text = "Șterge", UseColumnTextForButtonValue = true, Width = 90 });
-        var gridPanel = Ui.Card(28, canEdit ? 166 : 28, 850, canEdit ? 390 : 528);
+        var gridPanel = Ui.Card(28, canEdit ? 166 : 142, 850, canEdit ? 390 : 414);
         gridPanel.Controls.Add(grid);
         _content.Controls.Add(gridPanel);
 
         async Task LoadGrid()
         {
             using var db = new AppDbContext();
-            var query = canEdit ? db.OrarEntries.Include(o => o.User) : db.OrarEntries.Where(o => o.UserId == AuthService.CurrentUser!.Id).Include(o => o.User);
+            IQueryable<OrarEntry> query = db.OrarEntries;
+            if (!canEdit && !AppDbContext.UsesMySql)
+            {
+                query = query.Where(o => o.UserId == AuthService.CurrentUser!.Id);
+            }
             var items = await query.ToListAsync();
+            if (!canEdit)
+            {
+                items = items.Where(o => ZiEquals(o.ZiSaptamana, ziVizualizata!.Text)).ToList();
+            }
+            if (!canEdit && ziCurentaLabel is not null)
+            {
+                ziCurentaLabel.Text = $"Orar pentru {ziVizualizata!.Text}";
+            }
             grid.DataSource = items.OrderBy(o => IndexZi(o.ZiSaptamana)).ThenBy(o => o.OraInceput)
                 .Select(o => canEdit
                     ? new { o.Id, Elev = o.User?.NumeComplet ?? "-", o.ZiSaptamana, Interval = $"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie, o.Profesor }
@@ -370,7 +412,7 @@ public class FormularPrincipal : Form
                 var elevId = SelectedElevId(elev);
                 if (elevId is null) { MessageBox.Show("Selectează elevul."); return; }
                 using var db = new AppDbContext();
-                db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.Text, OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text.Trim(), Profesor = profesor.Text.Trim(), UserId = elevId.Value });
+                db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.Text, OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text.Trim(), Profesor = profesor.Text.Trim(), UserId = AppDbContext.UsesMySql ? null : elevId.Value });
                 db.Activitati.Add(new Activitate { Descriere = "Adminul a actualizat orarul", Tip = "orar", UserId = elevId.Value });
                 await db.SaveChangesAsync();
                 start.Clear(); end.Clear(); materie.Clear(); profesor.Clear();
@@ -391,7 +433,7 @@ public class FormularPrincipal : Form
 
     private async Task ShowAdminAsync()
     {
-        if (AuthService.CurrentUser?.Rol != "Admin") { await ShowDashboardAsync(); return; }
+        if (!IsAdmin()) { await ShowDashboardAsync(); return; }
         using var db = new AppDbContext();
         var users = await db.Users.ToListAsync();
         var totalNote = await db.Note.CountAsync();
@@ -484,7 +526,7 @@ public class FormularPrincipal : Form
     {
         using var db = new AppDbContext();
         var elevi = await db.Users
-            .Where(u => u.Rol != "Admin")
+            .Where(u => u.Rol.ToLower() != "admin")
             .OrderBy(u => u.NumeComplet)
             .Select(u => new ElevOption(u.Id, $"{u.NumeComplet} ({u.Email})"))
             .ToListAsync();
@@ -508,8 +550,27 @@ public class FormularPrincipal : Form
     }
 
     private static string IconFor(string tip) => tip switch { "nota" => "📊", "tema" => "✅", "orar" => "📅", _ => "•" };
-    private static bool IsAdmin() => AuthService.CurrentUser?.Rol == "Admin";
-    private static int IndexZi(string zi) => Array.IndexOf(new[] { "Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica" }, zi);
+    private static bool IsAdmin() => IsAdmin(AuthService.CurrentUser);
+    private static bool IsAdmin(User? user) => string.Equals(user?.Rol, "Admin", StringComparison.OrdinalIgnoreCase);
+    private static bool ZiEquals(string left, string right) => NormalizeZi(left) == NormalizeZi(right);
+    private static int IndexZi(string zi) => Array.IndexOf(new[] { "Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica" }, NormalizeZi(zi));
+    private static string NormalizeZi(string zi)
+    {
+        var value = zi.Trim()
+            .Replace("ă", "a").Replace("â", "a").Replace("î", "i").Replace("ș", "s").Replace("ş", "s").Replace("ț", "t").Replace("ţ", "t")
+            .Replace("Ă", "A").Replace("Â", "A").Replace("Î", "I").Replace("Ș", "S").Replace("Ş", "S").Replace("Ț", "T").Replace("Ţ", "T")
+            .ToLowerInvariant();
+
+        if (value.StartsWith("lun")) return "Luni";
+        if (value.StartsWith("mar")) return "Marti";
+        if (value.StartsWith("mie")) return "Miercuri";
+        if (value.StartsWith("joi")) return "Joi";
+        if (value.StartsWith("vin")) return "Vineri";
+        if (value.StartsWith("sam") || value.StartsWith("sâm")) return "Sambata";
+        if (value.StartsWith("dum")) return "Duminica";
+
+        return zi.Trim();
+    }
     private static string ZiRomaneasca(DayOfWeek zi) => zi switch
     {
         DayOfWeek.Monday => "Luni",

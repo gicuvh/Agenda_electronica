@@ -12,7 +12,11 @@ public static class AuthService
     {
         using var db = new AppDbContext();
         await db.Database.EnsureCreatedAsync();
-        await EnsureSchemaAsync(db);
+        if (AppDbContext.UsesMySql)
+            await EnsureMySqlSchemaAsync(db);
+        else
+            await EnsureSchemaAsync(db);
+
         await SeedUserAsync(db, "Admin Principal", "admin@gmail.com", "Admin123!", "Admin");
         await SeedUserAsync(db, "Gheorghe", "gicu@gmail.com", "user123!", "Elev");
         await db.SaveChangesAsync();
@@ -48,7 +52,7 @@ public static class AuthService
         email = email.Trim().ToLowerInvariant();
         using var db = new AppDbContext();
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
-        if (user is null || !BCrypt.Net.BCrypt.Verify(parola, user.PasswordHash))
+        if (user is null || !PasswordMatches(parola, user.PasswordHash))
             return (false, "Email sau parola incorecta.");
 
         CurrentUser = user;
@@ -56,6 +60,17 @@ public static class AuthService
     }
 
     public static void Logout() => CurrentUser = null;
+
+    private static bool PasswordMatches(string password, string storedPassword)
+    {
+        if (string.IsNullOrWhiteSpace(storedPassword))
+            return false;
+
+        if (storedPassword.StartsWith("$2"))
+            return BCrypt.Net.BCrypt.Verify(password, storedPassword);
+
+        return password == storedPassword;
+    }
 
     private static async Task SeedUserAsync(AppDbContext db, string nume, string email, string parola, string rol)
     {
@@ -171,5 +186,52 @@ public static class AuthService
 
         if (!hasClasaId)
             await db.Database.ExecuteSqlRawAsync("""ALTER TABLE "Users" ADD COLUMN "ClasaId" INTEGER NULL;""");
+    }
+
+    private static async Task EnsureMySqlSchemaAsync(AppDbContext db)
+    {
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS clase (
+                IdClasa INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                Nume VARCHAR(100) NOT NULL UNIQUE,
+                DataCreare DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+            """);
+
+        await db.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS activitati (
+                IdActivitate INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                IdUtilizator INT NOT NULL,
+                Descriere VARCHAR(500) NOT NULL,
+                Timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                Tip VARCHAR(50) NOT NULL
+            );
+            """);
+
+        await AddMySqlColumnIfMissingAsync(db, "utilizatori", "DataInregistrare", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+        await AddMySqlColumnIfMissingAsync(db, "utilizatori", "ClasaId", "INT NULL");
+        await AddMySqlColumnIfMissingAsync(db, "note", "Descriere", "VARCHAR(500) NULL");
+        await AddMySqlColumnIfMissingAsync(db, "teme", "Materie", "VARCHAR(100) NOT NULL DEFAULT ''");
+        await AddMySqlColumnIfMissingAsync(db, "orar", "IdUtilizator", "INT NULL");
+    }
+
+    private static async Task AddMySqlColumnIfMissingAsync(AppDbContext db, string table, string column, string definition)
+    {
+        var exists = await db.Database.SqlQueryRaw<int>(
+            """
+            SELECT COUNT(*) AS Value
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = {0}
+              AND COLUMN_NAME = {1}
+            """,
+            table,
+            column).SingleAsync();
+
+        if (exists == 0)
+        {
+            var sql = string.Concat("ALTER TABLE `", table, "` ADD COLUMN `", column, "` ", definition, ";");
+            await db.Database.ExecuteSqlRawAsync(sql);
+        }
     }
 }

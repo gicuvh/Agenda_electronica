@@ -78,7 +78,7 @@ public partial class MainWindow : Window
                         return;
                     }
 
-                    ShowShell("Dashboard");
+                    ShowShell(IsAdmin(AuthService.CurrentUser) ? "Admin" : "Dashboard");
                 }),
                 GoogleButton("Autentificare rapida cu Google")
             }
@@ -213,18 +213,6 @@ public partial class MainWindow : Window
         };
         panel.Children.Add(top);
 
-        var bottom = new StackPanel
-        {
-            [Grid.RowProperty] = 2,
-            Spacing = 10,
-            Margin = new Thickness(16, 0, 12, 18),
-            Children =
-            {
-                StudentSidebarButton("Setari", "Setari", false, () => { }),
-                StudentSidebarButton("Ajutor", "Ajutor", false, () => { })
-            }
-        };
-        panel.Children.Add(bottom);
         return panel;
     }
 
@@ -298,7 +286,7 @@ public partial class MainWindow : Window
         var layout = new Grid
         {
             ColumnDefinitions = new ColumnDefinitions("220,*"),
-            RowDefinitions = new RowDefinitions(user.Rol == "Admin" && page == "Admin" ? "72,*" : "88,*"),
+            RowDefinitions = new RowDefinitions(IsAdmin(user) && page == "Admin" ? "72,*" : "88,*"),
             Background = AppBackground
         };
 
@@ -320,12 +308,12 @@ public partial class MainWindow : Window
         layout.Children.Add(scroll);
 
         Content = layout;
-        _ = Navigate(page);
+        _ = NavigateSafely(page);
     }
 
     private Control BuildSidebar(User user)
     {
-        if (user.Rol == "Admin" && _currentPage == "Admin")
+        if (IsAdmin(user) && _currentPage == "Admin")
             return BuildAdminSidebar();
 
         var sidebar = new Grid
@@ -345,23 +333,10 @@ public partial class MainWindow : Window
         AddNav(top, "Note");
         AddNav(top, "Teme");
         AddNav(top, "Orar");
-        if (user.Rol == "Admin")
+        if (IsAdmin(user))
             AddNav(top, "Admin");
         top.Children.Add(new Border { Height = 1, Margin = new Thickness(0, 14, 0, 8), Background = CardBorder });
         sidebar.Children.Add(top);
-
-        var bottom = new StackPanel
-        {
-            [Grid.RowProperty] = 2,
-            Spacing = 9,
-            Margin = new Thickness(14, 0, 14, 26),
-            Children =
-            {
-                StudentSidebarButton("Setari", "Setari", false, () => { }),
-                StudentSidebarButton("Ajutor", "Ajutor", false, () => { })
-            }
-        };
-        sidebar.Children.Add(bottom);
         return sidebar;
     }
 
@@ -389,33 +364,24 @@ public partial class MainWindow : Window
         top.Children.Add(new Border { Height = 1, Background = CardBorder, Margin = new Thickness(0, 12, 0, 8) });
         sidebar.Children.Add(top);
 
-        var bottom = new StackPanel
-        {
-            [Grid.RowProperty] = 2,
-            Spacing = 8,
-            Margin = new Thickness(14, 0, 14, 22),
-        };
-        AddAdminNav(bottom, "SetariSistem", "Setari sistem", "Setari");
-        AddAdminNav(bottom, "Suport", "Suport", "Ajutor");
-        sidebar.Children.Add(bottom);
         return sidebar;
     }
 
     private void AddAdminNav(StackPanel sidebar, string key, string text, string icon)
     {
-        var button = AdminSidebarButton(text, icon, key == _currentPage, () => _ = Navigate(key));
+        var button = AdminSidebarButton(text, icon, key == _currentPage, () => _ = NavigateSafely(key));
         _navButtons[key] = button;
         sidebar.Children.Add(button);
     }
 
     private Control BuildHeader(User user)
     {
-        if (user.Rol == "Admin" && IsAdminPage(_currentPage))
+        if (IsAdmin(user) && IsAdminPage(_currentPage))
             return BuildAdminHeader(user);
 
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"),
             Background = Surface,
             Margin = new Thickness(36, 22, 24, 12)
         };
@@ -430,41 +396,23 @@ public partial class MainWindow : Window
             }
         });
 
-        if (user.Rol == "Admin")
-        {
-            var adminMode = SmallButton("", () => ShowShell("Admin"), Brush.Parse("#f3e8ff"), Purple);
-            adminMode.Content = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                Spacing = 7,
-                Children =
-                {
-                    IconText("Admin", 13, Purple),
-                    Text("Modul Admin", Purple, 12, FontWeight.Bold)
-                }
-            };
-            adminMode.SetValue(Grid.ColumnProperty, 1);
-            adminMode.Margin = new Thickness(0, 0, 20, 0);
-            grid.Children.Add(adminMode);
-        }
-
         var bell = NotificationButton("2");
-        bell.SetValue(Grid.ColumnProperty, 2);
+        bell.SetValue(Grid.ColumnProperty, 1);
         bell.Margin = new Thickness(0, 0, 14, 0);
         grid.Children.Add(bell);
 
         var theme = HeaderActionButton(_darkMode ? "Light" : "Dark", ToggleTheme, Brush.Parse(_darkMode ? "#111827" : "#f8fafc"), TextBrush);
-        theme.SetValue(Grid.ColumnProperty, 3);
+        theme.SetValue(Grid.ColumnProperty, 2);
         theme.Margin = new Thickness(0, 0, 12, 0);
         grid.Children.Add(theme);
 
         var logout = HeaderActionButton("Log out", Logout, Brush.Parse("#feecec"), Danger);
-        logout.SetValue(Grid.ColumnProperty, 4);
+        logout.SetValue(Grid.ColumnProperty, 3);
         logout.Margin = new Thickness(0, 0, 24, 0);
         grid.Children.Add(logout);
 
         var profile = ProfileBlock(user, false);
-        profile.SetValue(Grid.ColumnProperty, 5);
+        profile.SetValue(Grid.ColumnProperty, 4);
         grid.Children.Add(profile);
         return grid;
     }
@@ -542,7 +490,7 @@ public partial class MainWindow : Window
 
     private void AddNav(StackPanel sidebar, string key)
     {
-        var button = StudentSidebarButton(key, IconKeyForPage(key), false, () => _ = Navigate(key));
+        var button = StudentSidebarButton(key, IconKeyForPage(key), false, () => _ = NavigateSafely(key));
         button.HorizontalAlignment = HorizontalAlignment.Stretch;
         button.HorizontalContentAlignment = HorizontalAlignment.Left;
         _navButtons[key] = button;
@@ -610,6 +558,43 @@ public partial class MainWindow : Window
         }
     }
 
+    private async Task NavigateSafely(string page)
+    {
+        try
+        {
+            await Navigate(page);
+        }
+        catch (Exception ex)
+        {
+            ShowPageError(ex);
+        }
+    }
+
+    private void ShowPageError(Exception ex)
+    {
+        if (_content is null)
+            return;
+
+        _content.Children.Clear();
+        _content.Children.Add(new Border
+        {
+            Background = Surface,
+            BorderBrush = Danger,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(12),
+            Padding = new Thickness(24),
+            Child = new StackPanel
+            {
+                Spacing = 10,
+                Children =
+                {
+                    Text("Nu s-a putut incarca pagina.", Danger, 18, FontWeight.Bold),
+                    Text(ex.Message, TextBrush, 13)
+                }
+            }
+        });
+    }
+
     private async Task ShowDashboardAsync()
     {
         var user = AuthService.CurrentUser!;
@@ -619,14 +604,17 @@ public partial class MainWindow : Window
         var note = await db.Note.Where(n => isAdmin || n.UserId == user.Id).GroupBy(n => n.Materie)
             .Select(g => new Pair(g.Key, g.Average(n => n.Valoare).ToString("0.0"))).Take(3).ToListAsync();
 
-        var teme = await db.Teme.Where(t => (isAdmin || t.UserId == user.Id) && !t.Finalizata && t.Deadline >= DateTime.Today)
+        var temeList = await db.Teme.Where(t => (isAdmin || t.UserId == user.Id) && !t.Finalizata && t.Deadline >= DateTime.Today)
             .OrderBy(t => t.Deadline)
             .Take(3)
-            .Select(t => new Pair(t.Titlu, t.Deadline == DateTime.Today ? "Azi" : t.Deadline == DateTime.Today.AddDays(1) ? "Maine" : $"{(t.Deadline - DateTime.Today).Days} zile"))
             .ToListAsync();
+        var teme = temeList
+            .Select(t => new Pair(t.Titlu, t.Deadline == DateTime.Today ? "Azi" : t.Deadline == DateTime.Today.AddDays(1) ? "Maine" : $"{(t.Deadline - DateTime.Today).Days} zile"))
+            .ToList();
 
         var zi = ZiRomaneasca(DateTime.Today.DayOfWeek);
-        var orar = (await db.OrarEntries.Where(o => (isAdmin || o.UserId == user.Id) && o.ZiSaptamana == zi).ToListAsync())
+        var orar = (await db.OrarEntries.Where(o => isAdmin || AppDbContext.UsesMySql || o.UserId == user.Id).ToListAsync())
+            .Where(o => ZiEquals(o.ZiSaptamana, zi))
             .OrderBy(o => o.OraInceput)
             .Take(3)
             .Select(o => new Pair($"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie))
@@ -1345,9 +1333,9 @@ public partial class MainWindow : Window
         var canEdit = IsAdmin();
         var user = AuthService.CurrentUser!;
         using var db = new AppDbContext();
-        var query = canEdit
-            ? db.OrarEntries.Include(o => o.User)
-            : db.OrarEntries.Where(o => o.UserId == user.Id).Include(o => o.User);
+        IQueryable<OrarEntry> query = db.OrarEntries;
+        if (!canEdit && !AppDbContext.UsesMySql)
+            query = query.Where(o => o.UserId == user.Id);
         var items = await query.ToListAsync();
 
         _content!.Spacing = 28;
@@ -1398,7 +1386,7 @@ public partial class MainWindow : Window
             }
 
             using var db = new AppDbContext();
-            db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.SelectedItem?.ToString() ?? "Luni", OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text!.Trim(), Profesor = profesor.Text?.Trim(), UserId = elevId });
+            db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.SelectedItem?.ToString() ?? "Luni", OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text!.Trim(), Profesor = profesor.Text?.Trim(), UserId = AppDbContext.UsesMySql ? null : elevId });
             db.Activitati.Add(new Activitate { Descriere = "Adminul a actualizat orarul", Tip = "orar", UserId = elevId });
             await db.SaveChangesAsync();
             await Navigate("Orar");
@@ -1410,7 +1398,9 @@ public partial class MainWindow : Window
     private async Task LoadOrarListAsync(bool canEdit)
     {
         using var db = new AppDbContext();
-        var query = canEdit ? db.OrarEntries.Include(o => o.User) : db.OrarEntries.Where(o => o.UserId == AuthService.CurrentUser!.Id).Include(o => o.User);
+        IQueryable<OrarEntry> query = db.OrarEntries;
+        if (!canEdit && !AppDbContext.UsesMySql)
+            query = query.Where(o => o.UserId == AuthService.CurrentUser!.Id);
         var items = await query.ToListAsync();
         var rows = items.OrderBy(o => IndexZi(o.ZiSaptamana)).ThenBy(o => o.OraInceput)
             .Select(o => new RowAction(o.Id, canEdit
@@ -1529,7 +1519,7 @@ public partial class MainWindow : Window
         for (var i = 0; i < weekDays.Length; i++)
         {
             var dayEntries = entries
-                .Where(e => e.ZiSaptamana == weekDays[i])
+                .Where(e => ZiEquals(e.ZiSaptamana, weekDays[i]))
                 .OrderBy(e => e.OraInceput)
                 .ToList();
             grid.Children.Add(DayScheduleColumn(weekDays[i], dayEntries, canEdit, i));
@@ -1777,7 +1767,7 @@ public partial class MainWindow : Window
         }
 
         using var db = new AppDbContext();
-        var users = await db.Users.CountAsync(u => u.Rol != "Admin");
+        var users = await db.Users.CountAsync(u => u.Rol.ToLower() != "admin");
         var notes = await db.Note.Include(n => n.User).ToListAsync();
         var themes = await db.Teme.Include(t => t.User).ToListAsync();
         var classes = await db.Clase.Include(c => c.Elevi).OrderBy(c => c.Nume).ToListAsync();
@@ -1955,7 +1945,7 @@ public partial class MainWindow : Window
         using var db = new AppDbContext();
         var clase = await db.Clase.OrderBy(c => c.Nume).ToListAsync();
         var elevi = await db.Users
-            .Where(u => u.Rol != "Admin")
+            .Where(u => u.Rol.ToLower() != "admin")
             .Include(u => u.Clasa)
             .Include(u => u.Note)
             .OrderBy(u => u.Clasa!.Nume)
@@ -2922,7 +2912,7 @@ public partial class MainWindow : Window
     {
         using var db = new AppDbContext();
         var elevi = await db.Users
-            .Where(u => u.Rol != "Admin")
+            .Where(u => u.Rol.ToLower() != "admin")
             .OrderBy(u => u.NumeComplet)
             .Select(u => new ElevOption(u.Id, $"{u.NumeComplet} ({u.Email})"))
             .ToListAsync();
@@ -3380,7 +3370,8 @@ public partial class MainWindow : Window
     private static string TemaStatus(Tema t)
         => t.Finalizata ? "Finalizata" : t.Deadline < DateTime.Today ? "Expirata" : "In asteptare";
 
-    private static bool IsAdmin() => AuthService.CurrentUser?.Rol == "Admin";
+    private static bool IsAdmin() => IsAdmin(AuthService.CurrentUser);
+    private static bool IsAdmin(User? user) => string.Equals(user?.Rol, "Admin", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsAdminPage(string page) => page is
         "Admin" or
@@ -3389,7 +3380,6 @@ public partial class MainWindow : Window
         "AdminOrar" or
         "Rapoarte" or
         "Aprobari" or
-        "SetariSistem" or
         "Suport";
 
     private static string PageTitle(string page) => page switch
@@ -3421,7 +3411,26 @@ public partial class MainWindow : Window
         _ => "-"
     };
 
-    private static int IndexZi(string zi) => Array.IndexOf(Days, zi);
+    private static bool ZiEquals(string left, string right) => NormalizeZi(left) == NormalizeZi(right);
+    private static int IndexZi(string zi) => Array.IndexOf(Days, NormalizeZi(zi));
+
+    private static string NormalizeZi(string zi)
+    {
+        var value = zi.Trim()
+            .Replace("ă", "a").Replace("â", "a").Replace("î", "i").Replace("ș", "s").Replace("ş", "s").Replace("ț", "t").Replace("ţ", "t")
+            .Replace("Ă", "A").Replace("Â", "A").Replace("Î", "I").Replace("Ș", "S").Replace("Ş", "S").Replace("Ț", "T").Replace("Ţ", "T")
+            .ToLowerInvariant();
+
+        if (value.StartsWith("lun")) return "Luni";
+        if (value.StartsWith("mar")) return "Marti";
+        if (value.StartsWith("mie")) return "Miercuri";
+        if (value.StartsWith("joi")) return "Joi";
+        if (value.StartsWith("vin")) return "Vineri";
+        if (value.StartsWith("sam") || value.StartsWith("sâm")) return "Sambata";
+        if (value.StartsWith("dum")) return "Duminica";
+
+        return zi.Trim();
+    }
 
     private static string ZiRomaneasca(DayOfWeek zi) => zi switch
     {

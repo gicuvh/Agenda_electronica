@@ -1,0 +1,3 @@
+# Copiaza acest fisier ca mysql-connection.txt langa Agenda.exe si completeaza datele tale.
+# Exemplu:
+# server=localhost;port=3306;database=agenda;user=root;password=parola;

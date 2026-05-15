@@ -1,0 +1,7 @@
+Provider: MySQL
+Users: 6
+Orar: 19
+Note: 5
+Teme: 4
+Sample users: 1:Administrator:admin@agenda.md:Admin | 2:Gheorghe Voloh:gicu@gmail.com:User | 3:Maria Ionescu:maria@gmail.com:User | 4:Ion Popescu:ion.popescu@gmail.com:User | 5:Sandu:sandu@gmail.com:user
+Sample orar: 1:Luni:08:00:00-08:50:00:Matematică:Ion Popescu | 2:Luni:09:00:00-09:50:00:Informatică:Maria Rusu | 3:Luni:10:00:00-10:50:00:Limba Română:Elena Cojocaru | 4:Marți:08:00:00-08:50:00:Fizică:Victor Munteanu | 5:Marți:09:00:00-09:50:00:Engleză:Ana Moraru | 6:Marți:10:00:00-10:50:00:Istorie:Sergiu Lupan | 7:Miercuri:08:00:00-08:50:00:Biologie:Natalia Vicol | 8:Miercuri:09:00:00-09:50:00:Chimie:Tatiana Ursu
