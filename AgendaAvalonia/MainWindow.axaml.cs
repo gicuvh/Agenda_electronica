@@ -221,24 +221,20 @@ public partial class MainWindow : Window
         var header = new Grid
         {
             [Grid.ColumnProperty] = 1,
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
             Background = Surface,
             Margin = new Thickness(18, 0, 18, 0)
         };
 
         header.Children.Add(BrandTitle(18));
-        var notify = IconText("Notificari", 16, Muted);
-        notify.SetValue(Grid.ColumnProperty, 1);
-        notify.Margin = new Thickness(0, 18, 14, 0);
-        header.Children.Add(notify);
 
         var theme = ThemeButton();
-        theme.SetValue(Grid.ColumnProperty, 2);
+        theme.SetValue(Grid.ColumnProperty, 1);
         theme.Margin = new Thickness(0, 9, 14, 9);
         header.Children.Add(theme);
 
         var user = Text(userText, SecondaryText, 11, FontWeight.Bold);
-        user.SetValue(Grid.ColumnProperty, 3);
+        user.SetValue(Grid.ColumnProperty, 2);
         user.Margin = new Thickness(0, 12, 0, 0);
         header.Children.Add(user);
         return header;
@@ -381,7 +377,7 @@ public partial class MainWindow : Window
 
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
             Background = Surface,
             Margin = new Thickness(36, 22, 24, 12)
         };
@@ -396,23 +392,18 @@ public partial class MainWindow : Window
             }
         });
 
-        var bell = NotificationButton("2");
-        bell.SetValue(Grid.ColumnProperty, 1);
-        bell.Margin = new Thickness(0, 0, 14, 0);
-        grid.Children.Add(bell);
-
         var theme = HeaderActionButton(_darkMode ? "Light" : "Dark", ToggleTheme, Brush.Parse(_darkMode ? "#111827" : "#f8fafc"), TextBrush);
-        theme.SetValue(Grid.ColumnProperty, 2);
+        theme.SetValue(Grid.ColumnProperty, 1);
         theme.Margin = new Thickness(0, 0, 12, 0);
         grid.Children.Add(theme);
 
         var logout = HeaderActionButton("Log out", Logout, Brush.Parse("#feecec"), Danger);
-        logout.SetValue(Grid.ColumnProperty, 3);
+        logout.SetValue(Grid.ColumnProperty, 2);
         logout.Margin = new Thickness(0, 0, 24, 0);
         grid.Children.Add(logout);
 
         var profile = ProfileBlock(user, false);
-        profile.SetValue(Grid.ColumnProperty, 4);
+        profile.SetValue(Grid.ColumnProperty, 3);
         grid.Children.Add(profile);
         return grid;
     }
@@ -421,7 +412,7 @@ public partial class MainWindow : Window
     {
         var grid = new Grid
         {
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto"),
             Background = Surface,
             Margin = new Thickness(36, 20, 16, 14)
         };
@@ -436,48 +427,18 @@ public partial class MainWindow : Window
             }
         });
 
-        var bell = new Border
-        {
-            [Grid.ColumnProperty] = 1,
-            Width = 36,
-            Height = 36,
-            CornerRadius = new CornerRadius(18),
-            Background = Brush.Parse(_darkMode ? "#111827" : "#f8fafc"),
-            BorderBrush = CardBorder,
-            BorderThickness = new Thickness(1),
-            Margin = new Thickness(0, 0, 14, 0),
-            Child = new Grid
-            {
-                Children =
-                {
-                    IconText("Notificari", 15, Muted),
-                    new Border
-                    {
-                        Width = 13,
-                        Height = 13,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        VerticalAlignment = VerticalAlignment.Top,
-                        Background = Brush.Parse("#ff3b30"),
-                        CornerRadius = new CornerRadius(7),
-                        Child = Text("3", Brushes.White, 8, FontWeight.Bold, HorizontalAlignment.Center)
-                    }
-                }
-            }
-        };
-        grid.Children.Add(bell);
-
         var theme = HeaderActionButton(_darkMode ? "Light" : "Dark", ToggleTheme, Brush.Parse(_darkMode ? "#111827" : "#f8fafc"), TextBrush);
-        theme.SetValue(Grid.ColumnProperty, 2);
+        theme.SetValue(Grid.ColumnProperty, 1);
         theme.Margin = new Thickness(0, 0, 12, 0);
         grid.Children.Add(theme);
 
         var logout = HeaderActionButton("Log out", Logout, Brush.Parse("#feecec"), Danger);
-        logout.SetValue(Grid.ColumnProperty, 3);
+        logout.SetValue(Grid.ColumnProperty, 2);
         logout.Margin = new Thickness(0, 0, 22, 0);
         grid.Children.Add(logout);
 
         var profile = ProfileBlock(user, true);
-        profile.SetValue(Grid.ColumnProperty, 4);
+        profile.SetValue(Grid.ColumnProperty, 3);
         grid.Children.Add(profile);
         return grid;
     }
@@ -1368,9 +1329,17 @@ public partial class MainWindow : Window
         var end = Input("09:00");
         var materie = Input("Materie");
         var profesor = Input("Profesor");
+        var sala = Input("Sala (ex. 101)");
         var message = Text("", Danger, 12);
 
-        var form = FormCard("Adauga ora noua", message, elev, zi, start, end, materie, profesor);
+        var form = FormCard("Adauga ora noua", message, 
+            Field("Elev", elev),
+            Field("Zi", zi),
+            Field("Ora Inceput", start),
+            Field("Ora Sfarsit", end),
+            Field("Materie", materie),
+            Field("Profesor", profesor),
+            Field("Sala", sala));
         form.Children.Add(ActionButton("Adauga", async () =>
         {
             if (!TimeSpan.TryParse(start.Text, out var oraStart) || !TimeSpan.TryParse(end.Text, out var oraEnd) || string.IsNullOrWhiteSpace(materie.Text))
@@ -1386,7 +1355,7 @@ public partial class MainWindow : Window
             }
 
             using var db = new AppDbContext();
-            db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.SelectedItem?.ToString() ?? "Luni", OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text!.Trim(), Profesor = profesor.Text?.Trim(), UserId = AppDbContext.UsesMySql ? null : elevId });
+            db.OrarEntries.Add(new OrarEntry { ZiSaptamana = zi.SelectedItem?.ToString() ?? "Luni", OraInceput = oraStart, OraSfarsit = oraEnd, Materie = materie.Text!.Trim(), Profesor = profesor.Text?.Trim(), Sala = sala.Text?.Trim(), UserId = AppDbContext.UsesMySql ? null : elevId });
             db.Activitati.Add(new Activitate { Descriere = "Adminul a actualizat orarul", Tip = "orar", UserId = elevId });
             await db.SaveChangesAsync();
             await Navigate("Orar");
@@ -1398,17 +1367,17 @@ public partial class MainWindow : Window
     private async Task LoadOrarListAsync(bool canEdit)
     {
         using var db = new AppDbContext();
-        IQueryable<OrarEntry> query = db.OrarEntries;
+        IQueryable<OrarEntry> query = db.OrarEntries.Include(o => o.User);
         if (!canEdit && !AppDbContext.UsesMySql)
             query = query.Where(o => o.UserId == AuthService.CurrentUser!.Id);
         var items = await query.ToListAsync();
         var rows = items.OrderBy(o => IndexZi(o.ZiSaptamana)).ThenBy(o => o.OraInceput)
             .Select(o => new RowAction(o.Id, canEdit
-                ? new[] { o.User?.NumeComplet ?? "-", o.ZiSaptamana, $"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie, o.Profesor ?? "" }
-                : new[] { o.ZiSaptamana, $"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie, o.Profesor ?? "" }))
+                ? new[] { o.User?.NumeComplet ?? "-", o.ZiSaptamana, $"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie, o.Profesor ?? "", o.Sala ?? "-" }
+                : new[] { o.ZiSaptamana, $"{o.OraInceput:hh\\:mm} - {o.OraSfarsit:hh\\:mm}", o.Materie, o.Profesor ?? "", o.Sala ?? "-" }))
             .ToList();
 
-        _content!.Children.Add(TableCard(canEdit ? new[] { "Elev", "Zi", "Interval", "Materie", "Profesor" } : new[] { "Zi", "Interval", "Materie", "Profesor" }, rows, canEdit ? DeleteOrarAsync : null));
+        _content!.Children.Add(TableCard(canEdit ? new[] { "Elev", "Zi", "Interval", "Materie", "Profesor", "Sala" } : new[] { "Zi", "Interval", "Materie", "Profesor", "Sala" }, rows, canEdit ? DeleteOrarAsync : null));
     }
 
     private async Task DeleteOrarAsync(int id)
@@ -1570,39 +1539,44 @@ public partial class MainWindow : Window
     private static Border ScheduleLessonCard(OrarEntry entry, bool canEdit)
     {
         var accent = SubjectColor(entry.Materie);
+        var panel = new StackPanel
+        {
+            Spacing = 7,
+            Children =
+            {
+                new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = 8,
+                    Children =
+                    {
+                        new Border
+                        {
+                            Width = 10,
+                            Height = 10,
+                            CornerRadius = new CornerRadius(5),
+                            Background = accent,
+                            VerticalAlignment = VerticalAlignment.Center
+                        },
+                        Text(entry.Materie, TextBrush, 12, FontWeight.Bold)
+                    }
+                },
+                LessonMeta("Ceas", $"{entry.OraInceput:hh\\:mm} - {entry.OraSfarsit:hh\\:mm}"),
+                LessonMeta("User", entry.Profesor ?? "Profesor neatribuit"),
+                LessonMeta("Agenda", !string.IsNullOrEmpty(entry.Sala) ? $"Sala {entry.Sala}" : "Sala neatribuita")
+            }
+        };
+
+        if (canEdit && entry.User is not null)
+            panel.Children.Add(LessonMeta("User", entry.User.NumeComplet));
+
         return new Border
         {
             BorderBrush = CardBorder,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(9),
             Padding = new Thickness(12),
-            Child = new StackPanel
-            {
-                Spacing = 7,
-                Children =
-                {
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        Spacing = 8,
-                        Children =
-                        {
-                            new Border
-                            {
-                                Width = 10,
-                                Height = 10,
-                                CornerRadius = new CornerRadius(5),
-                                Background = accent,
-                                VerticalAlignment = VerticalAlignment.Center
-                            },
-                            Text(entry.Materie, TextBrush, 12, FontWeight.Bold)
-                        }
-                    },
-                    LessonMeta("Ceas", $"{entry.OraInceput:hh\\:mm} - {entry.OraSfarsit:hh\\:mm}"),
-                    LessonMeta("User", entry.Profesor ?? "Profesor neatribuit"),
-                    LessonMeta("Agenda", canEdit && entry.User is not null ? entry.User.NumeComplet : "Sala neatribuita")
-                }
-            }
+            Child = panel
         };
     }
 
@@ -1716,8 +1690,16 @@ public partial class MainWindow : Window
         }
 
         using var db = new AppDbContext();
-        var users = await db.Users.OrderBy(u => u.NumeComplet).ToListAsync();
-        var materii = await db.Note.Select(n => n.Materie).Distinct().CountAsync();
+        var usersCount = await db.Users.CountAsync(u => u.Rol.ToLower() != "admin");
+        var notes = await db.Note.ToListAsync();
+        var teme = await db.Teme.ToListAsync();
+        var orar = await db.OrarEntries.ToListAsync();
+        var materiiCount = notes.Select(n => n.Materie)
+            .Concat(teme.Select(t => t.Materie))
+            .Concat(orar.Select(o => o.Materie))
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Count();
         var activitati = await db.Activitati.CountAsync();
         var temeNerezolvate = await db.Teme.CountAsync(t => !t.Finalizata && t.Deadline < DateTime.Today);
         var recent = await db.Activitati
@@ -1732,10 +1714,10 @@ public partial class MainWindow : Window
             ColumnDefinitions = new ColumnDefinitions("*,*,*,*"),
             ColumnSpacing = 24
         };
-        stats.Children.Add(AdminStatCard("Utilizatori activi", users.Count.ToString("N0"), "+12%", "User", Primary, 0));
-        stats.Children.Add(AdminStatCard("Materii inregistrate", materii.ToString("N0"), "45 active", "Agenda", Brush.Parse("#00b956"), 1));
-        stats.Children.Add(AdminStatCard("Activitati recente", activitati.ToString("N0"), "Astazi", "Activitate", Brush.Parse("#ff4b00"), 2));
-        stats.Children.Add(AdminStatCard("Rata de utilizare", $"{Math.Min(94, users.Count * 3)}%", "+8%", "Rapoarte", Brush.Parse("#a217f2"), 3));
+        stats.Children.Add(AdminStatCard("Utilizatori activi", usersCount.ToString("N0"), "User", Primary, 0));
+        stats.Children.Add(AdminStatCard("Materii inregistrate", materiiCount.ToString("N0"), "Agenda", Brush.Parse("#00b956"), 1));
+        stats.Children.Add(AdminStatCard("Activitati recente", activitati.ToString("N0"), "Activitate", Brush.Parse("#ff4b00"), 2));
+        stats.Children.Add(AdminStatCard("Rata de utilizare", $"{Math.Min(94, usersCount * 3)}%", "Rapoarte", Brush.Parse("#a217f2"), 3));
         root.Children.Add(stats);
 
         var lower = new Grid
@@ -1776,10 +1758,10 @@ public partial class MainWindow : Window
         var completion = themes.Count == 0 ? "0%" : $"{themes.Count(t => t.Finalizata) * 100 / themes.Count}%";
 
         var stats = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*"), ColumnSpacing = 24 };
-        stats.Children.Add(AdminStatCard("Elevi monitorizati", users.ToString(), "total", "User", Primary, 0));
-        stats.Children.Add(AdminStatCard("Media generala", avg, "note", "Note", Success, 1));
-        stats.Children.Add(AdminStatCard("Teme finalizate", completion, "progres", "Teme", Warning, 2));
-        stats.Children.Add(AdminStatCard("Clase active", classes.Count.ToString(), "clase", "Agenda", Purple, 3));
+        stats.Children.Add(AdminStatCard("Elevi monitorizati", users.ToString(), "User", Primary, 0));
+        stats.Children.Add(AdminStatCard("Media generala", avg, "Note", Success, 1));
+        stats.Children.Add(AdminStatCard("Teme finalizate", completion, "Teme", Warning, 2));
+        stats.Children.Add(AdminStatCard("Clase active", classes.Count.ToString(), "Agenda", Purple, 3));
 
         var subjectRows = notes
             .GroupBy(n => n.Materie)
@@ -2362,7 +2344,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private static Border AdminStatCard(string label, string value, string badge, string icon, IBrush brush, int column)
+    private static Border AdminStatCard(string label, string value, string icon, IBrush brush, int column)
     {
         var card = new Border
         {
@@ -2382,22 +2364,12 @@ public partial class MainWindow : Window
         card.Child = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
-            ColumnDefinitions = new ColumnDefinitions("*,Auto"),
             Children =
             {
                 IconText(icon, 24, Brushes.White),
-                new Border
-                {
-                    [Grid.ColumnProperty] = 1,
-                    Background = Brush.Parse("#ffffff33"),
-                    CornerRadius = new CornerRadius(12),
-                    Padding = new Thickness(9, 4),
-                    Child = Text(badge, Brushes.White, 10, FontWeight.Bold)
-                },
                 new TextBlock
                 {
                     [Grid.RowProperty] = 1,
-                    [Grid.ColumnSpanProperty] = 2,
                     Text = value,
                     Foreground = Brushes.White,
                     FontSize = 30,
@@ -2407,7 +2379,6 @@ public partial class MainWindow : Window
                 new TextBlock
                 {
                     [Grid.RowProperty] = 2,
-                    [Grid.ColumnSpanProperty] = 2,
                     Text = label,
                     Foreground = Brushes.White,
                     FontSize = 11,
@@ -2939,7 +2910,7 @@ public partial class MainWindow : Window
         };
     }
 
-    private static StackPanel Field(string label, TextBox input)
+    private static StackPanel Field(string label, Control input)
     {
         return new StackPanel
         {
@@ -3384,7 +3355,7 @@ public partial class MainWindow : Window
 
     private static string PageTitle(string page) => page switch
     {
-        "Admin" => "Panou Administrare",
+        "Admin" => "Dashboard",
         "AdminOrar" => "Orar & Calendar",
         "SetariSistem" => "Setari sistem",
         _ => page
@@ -3392,7 +3363,7 @@ public partial class MainWindow : Window
 
     private static string AdminPageSubtitle(string page) => page switch
     {
-        "Admin" => "Gestioneaza platforma Agenda",
+        "Admin" => "Prezentare generala a sistemului",
         "Utilizatori" => "Elevi, clase si situatia notelor",
         "Materii" => "Materii, note si medii centralizate",
         "AdminOrar" => "Programul saptamanal pentru elevi",

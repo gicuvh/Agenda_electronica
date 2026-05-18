@@ -127,10 +127,10 @@ public static class AuthService
         if (!await db.OrarEntries.AnyAsync(o => o.UserId == elev.Id))
         {
             db.OrarEntries.AddRange(
-                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Luni", OraInceput = new TimeSpan(8, 0, 0), OraSfarsit = new TimeSpan(8, 45, 0), Materie = "Matematica", Profesor = "Popescu A." },
-                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Luni", OraInceput = new TimeSpan(9, 0, 0), OraSfarsit = new TimeSpan(9, 45, 0), Materie = "Informatica", Profesor = "Ionescu M." },
-                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Marti", OraInceput = new TimeSpan(10, 0, 0), OraSfarsit = new TimeSpan(10, 45, 0), Materie = "Limba romana", Profesor = "Rusu E." },
-                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Miercuri", OraInceput = new TimeSpan(8, 0, 0), OraSfarsit = new TimeSpan(8, 45, 0), Materie = "Istorie", Profesor = "Munteanu V." }
+                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Luni", OraInceput = new TimeSpan(8, 0, 0), OraSfarsit = new TimeSpan(8, 45, 0), Materie = "Matematica", Profesor = "Popescu A.", Sala = "101" },
+                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Luni", OraInceput = new TimeSpan(9, 0, 0), OraSfarsit = new TimeSpan(9, 45, 0), Materie = "Informatica", Profesor = "Ionescu M.", Sala = "Lab Info" },
+                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Marti", OraInceput = new TimeSpan(10, 0, 0), OraSfarsit = new TimeSpan(10, 45, 0), Materie = "Limba romana", Profesor = "Rusu E.", Sala = "202" },
+                new OrarEntry { UserId = elev.Id, ZiSaptamana = "Miercuri", OraInceput = new TimeSpan(8, 0, 0), OraSfarsit = new TimeSpan(8, 45, 0), Materie = "Istorie", Profesor = "Munteanu V.", Sala = "105" }
             );
         }
 

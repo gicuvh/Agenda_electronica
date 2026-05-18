@@ -8,6 +8,7 @@ public class OrarEntry
     public TimeSpan OraSfarsit { get; set; }
     public string Materie { get; set; } = string.Empty;
     public string? Profesor { get; set; }
+    public string? Sala { get; set; }
     public int? UserId { get; set; }
     public User? User { get; set; }
 }
